@@ -1,0 +1,95 @@
+const socket = io.connect("http://25.22.208.33:8080");
+var clid = "";
+socket.on('connect', function(data) {
+    // socket.emit('join', 'Hello World from client');
+    clid = socket.id;
+ });
+
+socket.on('newins', function(data) {
+	// $('#future').append(data+ "<br/>");
+	if(data.clid == clid) {
+		alert(data.clmsg);
+	}
+	sessionStorage.setItem("clid", data.clid);
+	sessionStorage.setItem("clcust", data.clcust);
+	sessionStorage.setItem("clroom", data.clroom);
+	
+	// console.log(data);
+	// console.log(clid);
+});
+
+
+socket.on('broad', function(data) {
+	$('#future').append(data+ "<br/>");
+});
+
+// $('#chat_first_screen').submit(function(e){
+	// e.preventDefault();
+	// var message = $('#chat_input').val();
+	// socket.emit('messages', message);
+$('#chat_first_screen').click(function(e) {
+	e.preventDefault();
+	let ustokn = $("#frm_ustoken" ).val();
+	let usmail = $("#frm_usermail" ).val();
+	let usphno = $("#frm_userphno" ).val();
+	let usname = $("#frm_username" ).val();
+	socket.emit('newchat', { ustokn: ustokn, usmail: usmail, usphno: usphno, usname: usname } );
+});
+
+socket.on('onsocket', function (data) {
+	console.log('client onsocket !');
+	// document.getElementById('chat_id').value = socket.id;
+	// document.getElementById('chat_status').value = "1";
+    // document.getElementById('view_status').innerHTML = "Anda Terhubung ke <b style='color: #007bff;'>Agent</b>.";
+    // document.getElementById("chat_pict").style.backgroundImage = "url('customer-service.png')";
+    // document.getElementById("chat_menu").style.display = "block";
+
+    // var chatsesi = document.getElementById('chat_session').value;
+    // socket.emit('register', {room: "A"}); //ini ke server untuk registrasi
+});
+
+$( "#messageForm" ).submit( function() {
+	var nameVal = $( "#nameInput" ).val();
+	var nameValTo = $( "#nameInputTo" ).val();
+	var msg = $( "#messageInput" ).val();
+	
+	socket.emit( 'message', { name: nameVal,nameto: nameValTo, message: msg } );
+	
+	// Ajax call for saving datas
+	$.ajax({
+		url: "./ajax/insertNewMessage.php",
+		type: "POST",
+		data: { name: nameVal,nameto: nameValTo, message: msg },
+		success: function(data) {
+				console.log("success");
+		}
+	});
+	
+	return false;
+});
+
+socket.on('new message', function( data ) {
+	console.log(data);
+	var chatid = document.getElementById('chat_id').value;
+	if(data.user == chatid) {
+		var newMsgContent = '<div class="message parker">'+ data.msg +'<div class="es-time">'+ data.now +'</div></div>';
+          $(".messages").stop().animate({ scrollTop: $(".messages")[0].scrollHeight}, 1000);
+	} else {
+		var newMsgContent = '<div class="message stark">'+ data.msg +'<div class="es-time">'+ data.now +'</div></div>';
+          $(".messages").stop().animate({ scrollTop: $(".messages")[0].scrollHeight}, 1000);
+	}
+	$("#es-newchat").append(newMsgContent);
+});
+
+socket.on('is typing', function( data ) {
+	console.log(data);
+	var chatid = document.getElementById('chat_id').value;
+	if(data.user != chatid) {
+
+		if(data.status == "on") {
+        	document.getElementById("chat_typing").style.visibility = 'visible';
+		} else if(data.status == "off") {
+        	document.getElementById("chat_typing").style.visibility = 'hidden';
+		}
+	}
+});

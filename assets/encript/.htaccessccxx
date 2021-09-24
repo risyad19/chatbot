@@ -1,0 +1,3 @@
+<Files ~ "cryptojs-aes-format.js">
+  Deny from all
+</Files>
